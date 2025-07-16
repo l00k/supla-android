@@ -1617,7 +1617,23 @@ public class SuplaClient extends Thread implements SuplaClientApi {
           if (profile != null) {
             AuthInfo info = profile.getAuthInfo();
 
-            cfg.Host = info.getServerForCurrentAuthMethod();
+            // explode hostComplex into host and port
+            var hostComplex = info.getServerForCurrentAuthMethod();
+
+            if (!hostComplex.isEmpty()) {
+              String[] parts = hostComplex.split(":");
+              if (parts.length > 0) {
+                cfg.Host = parts[0];
+                if (parts.length > 1) {
+                  try {
+                    cfg.ssl_port = Integer.parseInt(parts[1]);
+                  } catch (NumberFormatException e) {
+                    Trace.e(log_tag, "Invalid port number: " + parts[1]);
+                  }
+                }
+              }
+            }
+
             cfg.clientGUID = info.getDecryptedGuid(_context);
             cfg.AuthKey = info.getDecryptedAuthKey(_context);
             cfg.Name = Build.MANUFACTURER + " " + Build.MODEL;
